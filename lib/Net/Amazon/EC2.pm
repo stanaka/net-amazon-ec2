@@ -57,7 +57,7 @@ use Net::Amazon::EC2::DescribeInstanceAttributeResponse;
 use Net::Amazon::EC2::EbsInstanceBlockDeviceMapping;
 use Net::Amazon::EC2::EbsBlockDevice;
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 =head1 NAME
 
@@ -67,8 +67,8 @@ environment.
 =head1 VERSION
 
 This document describes version 0.14 of Net::Amazon::EC2, released
-February 1st, 2010. This module is coded against the Query API version of the '2009-11-30' 
-version of the EC2 API last updated December 8th, 2009.
+February 1st, 2010. This module is coded against the Query API version of the '2011-01-01' 
+version of the EC2 API last updated January 1st, 2011.
 
 =head1 SYNOPSIS
 
@@ -146,7 +146,7 @@ has 'AWSAccessKeyId'	=> ( is => 'ro', isa => 'Str', required => 1 );
 has 'SecretAccessKey'	=> ( is => 'ro', isa => 'Str', required => 1 );
 has 'debug'				=> ( is => 'ro', isa => 'Str', required => 0, default => 0 );
 has 'signature_version'	=> ( is => 'ro', isa => 'Int', required => 1, default => 1 );
-has 'version'			=> ( is => 'ro', isa => 'Str', required => 1, default => '2009-11-30' );
+has 'version'			=> ( is => 'ro', isa => 'Str', required => 1, default => '2011-01-01' );
 has 'region'			=> ( is => 'ro', isa => 'Str', required => 1, default => 'us-east-1' );
 has 'timestamp'			=> ( 
 	is			=> 'ro', 
@@ -837,6 +837,73 @@ sub create_snapshot {
 		);
 
   		return $snapshot;
+	}
+}
+
+=head2 create_tags(%params)
+
+Creates tags.
+
+=over
+
+=item ResourceId (required)
+
+The ID of the resource to create tags
+
+=item Tag.Key (required)
+
+Key for a tag, may pass in a scalar or arrayref.
+
+=item Tag.Value (required)
+
+Value for a tag, may pass in a scalar or arrayref.
+
+=back
+
+Returns true if the releasing succeeded.
+
+=cut
+
+sub create_tags {
+	my $self = shift;
+	my %args = validate( @_, {
+		ResourceId				=> { type => ARRAYREF | SCALAR },
+		'Tag.Key'				=> { type => ARRAYREF | SCALAR },
+		'Tag.Value'				=> { type => ARRAYREF | SCALAR },
+	});
+
+	# If we have a array ref of keys lets split them out into their Tag.n.Key format
+	if (ref ($args{'Tag.Key'}) eq 'ARRAY') {
+		my $keys			= delete $args{'Tag.Key'};
+		my $count			= 1;
+		foreach my $key (@{$keys}) {
+			$args{"Tag." . $count . ".Key"} = $key;
+			$count++;
+		}
+	}
+
+	# If we have a array ref of values lets split them out into their Tag.n.Value format
+	if (ref ($args{'Tag.Value'}) eq 'ARRAY') {
+		my $values			= delete $args{'Tag.Value'};
+		my $count			= 1;
+		foreach my $value (@{$values}) {
+			$args{"Tag." . $count . ".Value"} = $value;
+			$count++;
+		}
+	}
+
+	my $xml = $self->_sign(Action  => 'CreateTags', %args);
+
+	if ( grep { defined && length } $xml->{Errors} ) {
+		return $self->_parse_errors($xml);
+	}
+	else {
+		if ($xml->{return} eq 'true') {
+			return 1;
+		}
+		else {
+			return undef;
+		}
 	}
 }
 
