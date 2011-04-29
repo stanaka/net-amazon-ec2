@@ -56,6 +56,8 @@ use Net::Amazon::EC2::InstanceStateChange;
 use Net::Amazon::EC2::DescribeInstanceAttributeResponse;
 use Net::Amazon::EC2::EbsInstanceBlockDeviceMapping;
 use Net::Amazon::EC2::EbsBlockDevice;
+use Net::Amazon::EC2::TagSet;
+use Net::Amazon::EC2::DescribeTags;
 
 $VERSION = '0.15';
 
@@ -1696,7 +1698,16 @@ sub describe_instances {
 				}
 				
 				my $placement_response = Net::Amazon::EC2::PlacementResponse->new( availability_zone => $instance_elem->{placement}{availabilityZone} );
-				
+
+				my $tag_sets;
+				foreach my $tag_arr (@{$instance_elem->{tagSet}{item}}) {
+					my $tag = Net::Amazon::EC2::TagSet->new(
+						key => $tag_arr->{key},
+						value => $tag_arr->{value},
+					);
+					push @$tag_sets, $tag;
+				}
+
 				my $running_instance = Net::Amazon::EC2::RunningInstances->new(
 					ami_launch_index		=> $instance_elem->{amiLaunchIndex},
 					dns_name				=> $instance_elem->{dnsName},
@@ -1722,6 +1733,7 @@ sub describe_instances {
 					root_device_type		=> $instance_elem->{rootDeviceType},
 					block_device_mapping	=> $block_device_mappings,
 					state_reason			=> $state_reason,
+					tag_set					=> $tag_sets,
 				);
 
 				if ($product_codes) {
@@ -2442,6 +2454,74 @@ sub describe_volumes {
 		}
 		
 		return $volumes;
+	}
+}
+
+=head2 describe_tags(%params)
+
+This method describes the tags available on this account. It takes the following parameter:
+
+=over
+
+=item Filter.Name (optional)
+
+The name of the Filter.Name to be described. Can be either a scalar or an array ref.
+
+=item Filter.Value (optional)
+
+The name of the Filter.Value to be described. Can be either a scalar or an array ref.
+
+=back
+
+Returns an array ref of Net::Amazon::EC2::DescribeTags objects
+
+=cut
+
+sub describe_tags {
+	my $self = shift;
+	my %args = validate( @_, {
+		'Filter.Name'				=> { type => ARRAYREF | SCALAR },
+		'Filter.Value'				=> { type => ARRAYREF | SCALAR },
+	});
+
+	if (ref ($args{'Filter.Name'}) eq 'ARRAY') {
+		my $keys			= delete $args{'Filter.Name'};
+		my $count			= 1;
+		foreach my $key (@{$keys}) {
+			$args{"Filter." . $count . ".Name"} = $key;
+			$count++;
+		}
+	}
+	if (ref ($args{'Filter.Value'}) eq 'ARRAY') {
+		my $keys			= delete $args{'Filter.Value'};
+		my $count			= 1;
+		foreach my $key (@{$keys}) {
+			$args{"Filter." . $count . ".Value"} = $key;
+			$count++;
+		}
+	}
+
+    %args = ('Filter.Name' => 'resource-type', 'Filter.Value' => 'image');
+	my $xml = $self->_sign(Action  => 'DescribeTags', %args);
+
+	if ( grep { defined && length } $xml->{Errors} ) {
+		return $self->_parse_errors($xml);
+	}
+	else {	
+		my $tags;
+
+		foreach my $pair (@{$xml->{tagSet}{item}}) {
+			my $tag = Net::Amazon::EC2::DescribeTags->new(
+				resource_id		=> $pair->{resourceId},
+				resource_type	=> $pair->{resourceType},
+				key				=> $pair->{key},
+				value			=> $pair->{value},
+			);
+			
+			push @$tags, $tag;
+		}
+
+		return $tags;
 	}
 }
 
