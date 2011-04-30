@@ -7,13 +7,13 @@ BEGIN {
         plan skip_all => "Set AWS_ACCESS_KEY_ID and SECRET_ACCESS_KEY environment variables to run these _LIVE_ tests (NOTE: they will incur one instance hour of costs from EC2)";
     }
     else {
-        plan tests => 20;
+        plan tests => 25;
         use_ok( 'Net::Amazon::EC2' );
     }
 };
 
 my $ec2 = Net::Amazon::EC2->new(
-	AWSAccessKeyId  => $ENV{AWS_ACCESS_KEY_ID}, 
+	AWSAccessKeyId  => $ENV{AWS_ACCESS_KEY_ID},
 	SecretAccessKey => $ENV{SECRET_ACCESS_KEY},
 	debug           => 0,
 );
@@ -95,6 +95,43 @@ foreach my $instance (@{$running_instances}) {
     }
 }
 ok($seen_test_instance == 1, "Checking for newly run instance");
+
+
+# create tags
+my $create_tags_result = $ec2->create_tags(
+    ResourceId  => $instance_id,
+    'Tag.Key'   => ["Name","test_tag_key"],
+    'Tag.Value' => ["hoge","test_tag_value"],
+);
+ok($create_tags_result == 1, "Checking for created tags");
+
+# describe_instances
+$running_instances = $ec2->describe_instances();
+my $test_instance;
+foreach my $instance (@{$running_instances}) {
+    my $instance_set = $instance->instances_set->[0];
+    if ($instance_set->instance_id eq $instance_id) {
+        $test_instance = $instance_set;
+        last;
+    }
+}
+# instance name
+is($test_instance->name, 'hoge', 'Checking for instance name');
+# instance tags
+foreach my $tag (@{$test_instance->tag_set}) {
+    if($tag->key eq 'Name' && $tag->value eq 'hoge') {
+        ok(1, 'Checking for tag (Name=hoge)');
+    }elsif($tag->key eq 'test_tag_key' && $tag->value eq 'test_tag_value') {
+        ok(1, 'Checking for tag (test_tag_key=test_tag_value)');
+    }
+}
+# delete tags
+my $delete_tags_result = $ec2->delete_tags(
+    ResourceId  => $instance_id,
+    'Tag.Key'   => ["Name","test_tag_key"],
+);
+ok($delete_tags_result == 1, "Checking for delete tags");
+
 
 # terminate_instances
 my $terminate_result = $ec2->terminate_instances(InstanceId => $instance_id);

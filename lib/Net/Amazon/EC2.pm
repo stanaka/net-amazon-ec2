@@ -1128,6 +1128,74 @@ sub delete_volume {
 	}
 }
 
+=head2 delete_tags(%params)
+
+Delete tags.
+
+=over
+
+=item ResourceId (required)
+
+The ID of the resource to delete tags
+
+=item Tag.Key (required)
+
+Key for a tag, may pass in a scalar or arrayref.
+
+=item Tag.Value (required)
+
+Value for a tag, may pass in a scalar or arrayref.
+
+=back
+
+Returns true if the releasing succeeded.
+
+=cut
+
+sub delete_tags {
+	my $self = shift;
+	my %args = validate( @_, {
+		ResourceId				=> { type => ARRAYREF | SCALAR },
+		'Tag.Key'				=> { type => ARRAYREF | SCALAR },
+		'Tag.Value'				=> { type => ARRAYREF | SCALAR, optional => 1 },
+	});
+
+	# If we have a array ref of keys lets split them out into their Tag.n.Key format
+	if (ref ($args{'Tag.Key'}) eq 'ARRAY') {
+		my $keys			= delete $args{'Tag.Key'};
+		my $count			= 1;
+		foreach my $key (@{$keys}) {
+			$args{"Tag." . $count . ".Key"} = $key;
+			$count++;
+		}
+	}
+
+	# If we have a array ref of values lets split them out into their Tag.n.Value format
+	if (ref ($args{'Tag.Value'}) eq 'ARRAY') {
+		my $values			= delete $args{'Tag.Value'};
+		my $count			= 1;
+		foreach my $value (@{$values}) {
+			$args{"Tag." . $count . ".Value"} = $value;
+			$count++;
+		}
+	}
+
+	my $xml = $self->_sign(Action  => 'DeleteTags', %args);
+
+	if ( grep { defined && length } $xml->{Errors} ) {
+		return $self->_parse_errors($xml);
+	}
+	else {
+		if ($xml->{return} eq 'true') {
+			return 1;
+		}
+		else {
+			return undef;
+		}
+	}
+}
+
+
 =head2 deregister_image(%params)
 
 This method will deregister an AMI. It takes the following parameter:
