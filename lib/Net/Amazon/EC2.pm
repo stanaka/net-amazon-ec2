@@ -2569,7 +2569,6 @@ sub describe_tags {
 		}
 	}
 
-    %args = ('Filter.Name' => 'resource-type', 'Filter.Value' => 'image');
 	my $xml = $self->_sign(Action  => 'DescribeTags', %args);
 
 	if ( grep { defined && length } $xml->{Errors} ) {
