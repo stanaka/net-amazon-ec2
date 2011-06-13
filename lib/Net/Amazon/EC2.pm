@@ -872,6 +872,18 @@ sub create_tags {
 		'Tag.Value'				=> { type => ARRAYREF | SCALAR },
 	});
 
+        if (ref ($args{'ResourceId'}) eq 'ARRAY') {
+                my $keys                        = delete $args{'ResourceId'};
+                my $count                       = 1;
+                foreach my $key (@{$keys}) {
+                        $args{"ResourceId." . $count} = $key;
+                        $count++;
+                }
+        }
+        else {
+                $args{"ResourceId.1"} = delete $args{'ResourceId'};
+        }
+
 	# If we have a array ref of keys lets split them out into their Tag.n.Key format
 	if (ref ($args{'Tag.Key'}) eq 'ARRAY') {
 		my $keys			= delete $args{'Tag.Key'};
