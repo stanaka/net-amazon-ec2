@@ -122,6 +122,14 @@ The root device type used by the AMI. The AMI can use an Amazon EBS or instance 
 
 An array ref of Net::Amazon::EC2::BlockDeviceMapping objects.
 
+=item tag_set (optional)
+
+An array ref of Net::Amazon::EC2::TagSet objects.
+
+=item name (optional)
+
+The instance name from tags.
+
 =cut
 
 has 'ami_launch_index'  	=> ( is => 'ro', isa => 'Str', required => 0 );
@@ -158,6 +166,18 @@ has 'architecture'			=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 has 'root_device_name'		=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 has 'root_device_type'		=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 has 'block_device_mapping'	=> ( is => 'ro', isa => 'Maybe[ArrayRef[Net::Amazon::EC2::BlockDeviceMapping]]', required => 0 );
+has 'tag_set'				=> ( is => 'ro', isa => 'Maybe[ArrayRef[Net::Amazon::EC2::TagSet]]', required => 0 );
+has 'name' => (
+	is => 'ro',
+	lazy    => 1,
+	default => sub {
+		my $self = shift;
+		return '' if !$self->tag_set || scalar @{$self->tag_set} == 0;
+		my $name = (grep {$_->{key} eq 'Name'} @{$self->tag_set})[0];
+		return $name->{value} || '';
+	},
+);
+
 
 __PACKAGE__->meta->make_immutable();
 
