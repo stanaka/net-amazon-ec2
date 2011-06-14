@@ -47,6 +47,8 @@ BEGIN {
 		Net::Amazon::EC2::DescribeInstanceAttributeResponse
 		Net::Amazon::EC2::EbsInstanceBlockDeviceMapping
 		Net::Amazon::EC2::EbsBlockDevice
+		Net::Amazon::EC2::DescribeTags
+		Net::Amazon::EC2::TagSet
 	);
 
 	plan tests => scalar @modules;
