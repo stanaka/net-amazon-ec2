@@ -130,6 +130,26 @@ An array ref of Net::Amazon::EC2::TagSet objects.
 
 The instance name from tags.
 
+=item group_set (optional)
+
+An array ref of Net::Amazon::EC2::GroupSet objects.
+
+=item instance_lifecycle (optional)
+
+Whether this is a Spot Instance.
+
+=item spot_instance_request_id (optional)
+
+ID of the Spot Instance request.
+
+=item virtualization_type (optional)
+
+Virtualization type of the instance.
+
+=item hypervisor (optional)
+
+Hypervisor type of the instance.
+
 =cut
 
 has 'ami_launch_index'  	=> ( is => 'ro', isa => 'Str', required => 0 );
@@ -177,7 +197,16 @@ has 'name' => (
 		return $name->{value} || '';
 	},
 );
-
+has 'group_set'			=> ( 
+    is			=> 'ro', 
+    isa			=> 'ArrayRef[Net::Amazon::EC2::GroupSet]',
+    required	=> 0,
+    auto_deref	=> 1,
+);
+has 'instance_lifecycle'		=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
+has 'spot_instance_request_id'	=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
+has 'virtualization_type'		=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
+has 'hypervisor'				=> ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 
 __PACKAGE__->meta->make_immutable();
 
