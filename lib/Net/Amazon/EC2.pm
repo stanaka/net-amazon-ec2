@@ -1782,9 +1782,11 @@ sub describe_instances {
 
 				my $tag_sets;
 				foreach my $tag_arr (@{$instance_elem->{tagSet}{item}}) {
+					my $key = $tag_arr->{key};
+					my $value = (ref $tag_arr->{value} eq '') ? $tag_arr->{value} : '';
 					my $tag = Net::Amazon::EC2::TagSet->new(
-						key => $tag_arr->{key},
-						value => $tag_arr->{value},
+						key => $key,
+						value => $value,
 					);
 					push @$tag_sets, $tag;
 				}
