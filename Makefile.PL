@@ -6,6 +6,7 @@ name            'Net-Amazon-EC2';
 all_from        'lib/Net/Amazon/EC2.pm';
 
 # Specific dependencies
+recommends	'LWP::Protocol::https'	=> 0;
 requires        'Digest::HMAC_SHA1'	=> 1.01;
 requires		'MIME::Base64'		=> 0;
 requires		'LWP::UserAgent'	=> 0;

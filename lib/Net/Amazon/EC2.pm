@@ -136,6 +136,12 @@ The region to run the API requests through. The options are:
 
 =back
 
+=item ssl (optional)
+
+If set to a true value, the base_url will use https:// instead of http://. Setting base_url explicitly will override this. Use depends on LWP::Protocol::https; if not installed it will die at runtime trying to fetch the url.
+
+=back
+
 =item debug (optional)
 
 A flag to turn on debugging. It is turned off by default
@@ -150,6 +156,7 @@ has 'debug'				=> ( is => 'ro', isa => 'Str', required => 0, default => 0 );
 has 'signature_version'	=> ( is => 'ro', isa => 'Int', required => 1, default => 1 );
 has 'version'			=> ( is => 'ro', isa => 'Str', required => 1, default => '2011-01-01' );
 has 'region'			=> ( is => 'ro', isa => 'Str', required => 1, default => 'us-east-1' );
+has 'ssl'				=> ( is => 'ro', isa => 'Bool', required => 1, default => 0 );
 has 'timestamp'			=> ( 
 	is			=> 'ro', 
 	isa			=> 'Str', 
@@ -168,7 +175,7 @@ has 'base_url'			=> (
 	required	=> 1,
 	lazy		=> 1,
 	default		=> sub {
-		return 'http://' . $_[0]->region . '.ec2.amazonaws.com';
+		return 'http' . ($_[0]->ssl ? 's' : '') . '://' . $_[0]->region . '.ec2.amazonaws.com';
 	}
 );
 
