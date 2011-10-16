@@ -1722,6 +1722,7 @@ sub describe_instances {
 			foreach my $group_arr (@{$reservation_set->{groupSet}{item}}) {
 				my $group = Net::Amazon::EC2::GroupSet->new(
 					group_id => $group_arr->{groupId},
+					group_name => $group_arr->{groupName},
 				);
 				push @$group_sets, $group;
 			}
@@ -3702,6 +3703,7 @@ sub run_instances {
 		foreach my $group_arr (@{$xml->{groupSet}{item}}) {
 			my $group = Net::Amazon::EC2::GroupSet->new(
 				group_id => $group_arr->{groupId},
+				group_name => $group_arr->{groupName},
 			);
 			push @$group_sets, $group;
 		}

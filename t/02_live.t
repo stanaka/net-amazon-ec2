@@ -92,7 +92,7 @@ my $run_result = $ec2->run_instances(
         InstanceType    => 'm1.small'
 );
 isa_ok($run_result, 'Net::Amazon::EC2::ReservationInfo');
-ok($run_result->group_set->[0]->group_id eq "test_group", "Checking for running instance");
+ok($run_result->group_set->[0]->group_name eq "test_group", "Checking for running instance");
 my $instance_id = $run_result->instances_set->[0]->instance_id;
 
 # describe_instances
