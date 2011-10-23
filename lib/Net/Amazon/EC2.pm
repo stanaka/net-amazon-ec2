@@ -951,7 +951,8 @@ The availability zone to create the volume in.
 
 =back
 
-Returns true if the releasing succeeded.
+Returns a Net::Amazon::EC2::Volume object containing the resulting volume
+status
 
 =cut
 
