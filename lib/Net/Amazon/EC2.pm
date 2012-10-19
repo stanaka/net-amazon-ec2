@@ -136,6 +136,12 @@ The region to run the API requests through. The options are:
 
 =back
 
+=item ssl (optional)
+
+If set to a true value, the base_url will use https:// instead of http://. Setting base_url explicitly will override this. Use depends on LWP::Protocol::https; if not installed it will die at runtime trying to fetch the url.
+
+=back
+
 =item debug (optional)
 
 A flag to turn on debugging. It is turned off by default
@@ -150,10 +156,13 @@ has 'debug'				=> ( is => 'ro', isa => 'Str', required => 0, default => 0 );
 has 'signature_version'	=> ( is => 'ro', isa => 'Int', required => 1, default => 1 );
 has 'version'			=> ( is => 'ro', isa => 'Str', required => 1, default => '2011-01-01' );
 has 'region'			=> ( is => 'ro', isa => 'Str', required => 1, default => 'us-east-1' );
+has 'ssl'				=> ( is => 'ro', isa => 'Bool', required => 1, default => 0 );
 has 'timestamp'			=> ( 
 	is			=> 'ro', 
 	isa			=> 'Str', 
 	required	=> 1, 
+	lazy		=> 1,
+        clearer		=> '_clear_timestamp',
 	default		=> sub { 
 		my $ts = time2isoz(); 
 		chop($ts); 
@@ -168,7 +177,7 @@ has 'base_url'			=> (
 	required	=> 1,
 	lazy		=> 1,
 	default		=> sub {
-		return 'http://' . $_[0]->region . '.ec2.amazonaws.com';
+		return 'http' . ($_[0]->ssl ? 's' : '') . '://' . $_[0]->region . '.ec2.amazonaws.com';
 	}
 );
 
@@ -177,6 +186,7 @@ sub _sign {
 	my %args						= @_;
 	my $action						= delete $args{Action};
 	my %sign_hash					= %args;
+        $self->_clear_timestamp;
 	$sign_hash{AWSAccessKeyId}		= $self->AWSAccessKeyId;
 	$sign_hash{Action}				= $action;
 	$sign_hash{Timestamp}			= $self->timestamp;
@@ -941,7 +951,8 @@ The availability zone to create the volume in.
 
 =back
 
-Returns true if the releasing succeeded.
+Returns a Net::Amazon::EC2::Volume object containing the resulting volume
+status
 
 =cut
 
@@ -1715,6 +1726,7 @@ sub describe_instances {
 			foreach my $group_arr (@{$reservation_set->{groupSet}{item}}) {
 				my $group = Net::Amazon::EC2::GroupSet->new(
 					group_id => $group_arr->{groupId},
+					group_name => $group_arr->{groupName},
 				);
 				push @$group_sets, $group;
 			}
@@ -3695,6 +3707,7 @@ sub run_instances {
 		foreach my $group_arr (@{$xml->{groupSet}{item}}) {
 			my $group = Net::Amazon::EC2::GroupSet->new(
 				group_id => $group_arr->{groupId},
+				group_name => $group_arr->{groupName},
 			);
 			push @$group_sets, $group;
 		}
