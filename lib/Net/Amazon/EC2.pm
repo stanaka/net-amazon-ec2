@@ -1714,7 +1714,8 @@ sub describe_instances {
 			my $group_sets;
 			foreach my $group_arr (@{$reservation_set->{groupSet}{item}}) {
 				my $group = Net::Amazon::EC2::GroupSet->new(
-					group_id => $group_arr->{groupId},
+					group_id	=> $group_arr->{groupId},
+					group_name	=> $group_arr->{groupName},
 				);
 				push @$group_sets, $group;
 			}
@@ -1781,11 +1782,21 @@ sub describe_instances {
 
 				my $tag_sets;
 				foreach my $tag_arr (@{$instance_elem->{tagSet}{item}}) {
+					my $key = $tag_arr->{key};
+					my $value = (ref $tag_arr->{value} eq '') ? $tag_arr->{value} : '';
 					my $tag = Net::Amazon::EC2::TagSet->new(
-						key => $tag_arr->{key},
-						value => $tag_arr->{value},
+						key => $key,
+						value => $value,
 					);
 					push @$tag_sets, $tag;
+				}
+				my $group_sets_instance;
+				foreach my $group_arr (@{$instance_elem->{groupSet}{item}}) {
+					my $group = Net::Amazon::EC2::GroupSet->new(
+						group_id	=> $group_arr->{groupId},
+						group_name	=> $group_arr->{groupName},
+					);
+					push @$group_sets_instance, $group;
 				}
 
 				my $running_instance = Net::Amazon::EC2::RunningInstances->new(
@@ -1814,6 +1825,11 @@ sub describe_instances {
 					block_device_mapping	=> $block_device_mappings,
 					state_reason			=> $state_reason,
 					tag_set					=> $tag_sets,
+					group_set				=> $group_sets_instance,
+					instance_lifecycle		=> $instance_elem->{instanceLifecycle},
+					spot_instance_request_id	=> $instance_elem->{spotInstanceRequestId},
+					virtualization_type		=> $instance_elem->{virtualizationType},
+					hypervisor				=> $instance_elem->{hypervisor},
 				);
 
 				if ($product_codes) {
@@ -3694,7 +3710,8 @@ sub run_instances {
 		my $group_sets;
 		foreach my $group_arr (@{$xml->{groupSet}{item}}) {
 			my $group = Net::Amazon::EC2::GroupSet->new(
-				group_id => $group_arr->{groupId},
+				group_id	=> $group_arr->{groupId},
+				group_name	=> $group_arr->{groupName},
 			);
 			push @$group_sets, $group;
 		}
